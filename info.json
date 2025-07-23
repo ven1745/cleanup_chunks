@@ -1,0 +1,9 @@
+{
+  "name": "cleanup_chunks",
+  "version": "1.0.1",
+  "title": "Cleanup Chunks",
+  "author": "arcbyte",
+  "factorio_version": "2.0",
+  "description": "Deletes unused chunks with a safety margin around active areas.",
+  "dependencies": ["base >= 1.1.0"]
+}
