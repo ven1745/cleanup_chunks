@@ -18,7 +18,7 @@ local function is_chunk_active(surface, chunk)
     {(chunk.x + 1) * 32, (chunk.y + 1) * 32}
   }
 
-  -- Check for player entities (e.g. assemblers, belts, etc.)
+  -- Check for player entities
   local entities = surface.find_entities_filtered{
     area = area,
     force = "player"
@@ -30,7 +30,7 @@ local function is_chunk_active(surface, chunk)
       entity.name:find("^space%-") or
       entity.name == "electric-energy-interface"
     ) then
-      return true -- count only real "active" player-built entities
+      return true
     end
   end
 
