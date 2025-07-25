@@ -62,6 +62,45 @@ local function is_chunk_active(surface, chunk)
   return false
 end
 
+-- keep chunks surrounded on 4 cardinal sides
+local function expand_preserve_for_surrounded_chunks(preserve_chunks)
+  local expanded = {}
+  for key, _ in pairs(preserve_chunks) do
+    expanded[key] = true
+  end
+
+  for key, _ in pairs(preserve_chunks) do
+    local x, y = key:match("(-?%d+),(-?%d+)")
+    x = tonumber(x)
+    y = tonumber(y)
+
+    -- Check neighbor positions
+    local neighbors = {
+      {x = x, y = y - 1},
+      {x = x, y = y + 1},
+      {x = x - 1, y = y},
+      {x = x + 1, y = y}
+    }
+
+    for _, n in ipairs(neighbors) do
+      local nk = chunk_key(n)
+      -- Only consider adding chunk if it's not already preserved and all 4 neighbors are preserved
+      if not expanded[nk] then
+        local north = chunk_key({x = n.x, y = n.y - 1})
+        local south = chunk_key({x = n.x, y = n.y + 1})
+        local west  = chunk_key({x = n.x - 1, y = n.y})
+        local east  = chunk_key({x = n.x + 1, y = n.y})
+
+        if preserve_chunks[north] and preserve_chunks[south] and preserve_chunks[east] and preserve_chunks[west] then
+          expanded[nk] = true
+        end
+      end
+    end
+  end
+
+  return expanded
+end
+
 local function cleanup_chunks(surface)
   local active_chunks = {}
   local preserve_chunks = {}
@@ -72,15 +111,19 @@ local function cleanup_chunks(surface)
     local key = chunk_key(chunk)
     if is_active then
       active_chunks[key] = true
-      -- Add surrounding 5x5 area (radius = 2)
-      for _, pos in pairs(get_chunk_positions_around(cx, cy, 2)) do
-        preserve_chunks[chunk_key(pos)] = true
+      -- Add surrounding 5x5 area
+      for dx = -2, 2 do
+        for dy = -2, 2 do
+          local nx, ny = cx + dx, cy + dy
+          preserve_chunks[chunk_key({x = nx, y = ny})] = true
+        end
       end
     end
   end
 
-  local deleted_count = 0
+  preserve_chunks = expand_preserve_for_surrounded_chunks(preserve_chunks)
 
+  local deleted_count = 0
   for chunk in surface.get_chunks() do
     local key = chunk_key(chunk)
     if not preserve_chunks[key] then
